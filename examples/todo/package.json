@@ -14,8 +14,9 @@
     "build:dist8": "lb-tsc es2017",
     "build:dist10": "lb-tsc es2018",
     "clean": "lb-clean *example-todo*.tgz dist* package api-docs",
+    "integration": "lb-mocha \"DIST/test/integration/**/*.js\"",
     "pretest": "npm run build:current",
-    "test": "lb-mocha \"DIST/test/unit/**/*.js\" \"DIST/test/acceptance/**/*.js\"",
+    "test": "lb-mocha \"DIST/test/*/**/*.js\"",
     "unit": "lb-mocha \"DIST/test/unit/**/*.js\"",
     "verify": "npm pack && tar xf loopback-todo*.tgz && tree package && npm run clean",
     "prestart": "npm run build:current",
@@ -45,7 +46,9 @@
     "@loopback/openapi-v3": "^0.10.4",
     "@loopback/openapi-v3-types": "^0.7.4",
     "@loopback/repository": "^0.10.4",
-    "@loopback/rest": "^0.10.4"
+    "@loopback/rest": "^0.10.4",
+    "@loopback/service-proxy": "^0.5.5",
+    "loopback-connector-rest": "^3.1.1"
   },
   "devDependencies": {
     "@loopback/build": "^0.6.5",

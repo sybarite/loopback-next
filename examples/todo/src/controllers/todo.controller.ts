@@ -16,9 +16,14 @@ import {
   patch,
   del,
 } from '@loopback/rest';
+import {inject} from '@loopback/core';
+import {GeoService} from '../services';
 
 export class TodoController {
-  constructor(@repository(TodoRepository) protected todoRepo: TodoRepository) {}
+  constructor(
+    @repository(TodoRepository) protected todoRepo: TodoRepository,
+    @inject('services.GeoService') protected geoService: GeoService,
+  ) {}
 
   @post('/todo')
   async createTodo(@requestBody() todo: Todo) {

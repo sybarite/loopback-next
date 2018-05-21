@@ -7,7 +7,7 @@ import {createClientForHandler, expect, supertest} from '@loopback/testlab';
 import {RestServer} from '@loopback/rest';
 import {TodoListApplication} from '../../src/application';
 import {TodoRepository} from '../../src/repositories/';
-import {givenTodo} from '../helpers';
+import {givenTodo, aLocation} from '../helpers';
 import {Todo} from '../../src/models/';
 
 describe('Application', () => {
@@ -41,12 +41,25 @@ describe('Application', () => {
     expect(result).to.containEql(todo);
   });
 
+  it('creates an address-based reminder', async () => {
+    const todo = givenTodo({remindAtAddress: aLocation.address});
+    const response = await client
+      .post('/todo')
+      .send(todo)
+      .expect(200);
+    todo.remindAtGeo = aLocation.geostring;
+    expect(response.body).to.containEql(todo);
+    const result = await todoRepo.findById(response.body.id);
+    expect(result).to.containEql(todo);
+  });
+
   it('gets a todo by ID', async () => {
     const todo = await givenTodoInstance();
-    await client
+    const result = await client
       .get(`/todo/${todo.id}`)
       .send()
-      .expect(200, todo);
+      .expect(200);
+    expect(result.body).to.deepEqual(todo);
   });
 
   it('replaces the todo by ID', async () => {

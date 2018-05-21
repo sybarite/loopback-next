@@ -40,12 +40,12 @@ const ds: juggler.DataSource = new juggler.DataSource({
     {
       template: {
         method: 'GET',
-        url: 'http://maps.googleapis.com/maps/api/geocode/{format=json}',
+        url: 'https://maps.googleapis.com/maps/api/geocode/{format=json}',
         query: {
           address: '{street},{city},{zipcode}',
           sensor: '{sensor=false}'
         },
-        responsePath: '$.results[0].geometry.location[0]'
+        responsePath: '$.results[0].geometry.location'
       },
       functions: {
         geocode: ['street', 'city', 'zipcode']
@@ -53,6 +53,12 @@ const ds: juggler.DataSource = new juggler.DataSource({
     }
   ]
 });
+```
+
+Install the REST connector used by the new datasource:
+
+```
+$ npm install --save loopback-connector-rest
 ```
 
 ### Bind data sources to the context

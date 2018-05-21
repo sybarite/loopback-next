@@ -3,10 +3,12 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {ApplicationConfig} from '@loopback/core';
+import {ApplicationConfig, Provider, Constructor} from '@loopback/core';
 import {RestApplication} from '@loopback/rest';
 import {MySequence} from './sequence';
 import {db} from './datasources/db.datasource';
+import {geoLookup} from './datasources/geo-lookup.datasource';
+import {GeoServiceProvider} from './services';
 
 /* tslint:disable:no-unused-variable */
 // Binding and Booter imports are required to infer types for BootMixin!
@@ -42,6 +44,7 @@ export class TodoListApplication extends BootMixin(
     };
 
     this.setupDatasources();
+    this.setupServices();
   }
 
   setupDatasources() {
@@ -52,5 +55,18 @@ export class TodoListApplication extends BootMixin(
         ? new juggler.DataSource(this.options.datasource)
         : db;
     this.dataSource(datasource);
+
+    // TODO(bajtos) How to allow app-level tests to provide
+    // a datasource pointing to a stub service?
+    this.dataSource(geoLookup);
+  }
+
+  setupServices() {
+    this.service(GeoServiceProvider);
+  }
+
+  service<T>(provider: Constructor<Provider<T>>) {
+    const key = `services.${provider.name.replace(/Provider$/, '')}`;
+    this.bind(key).toProvider(provider);
   }
 }

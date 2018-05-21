@@ -39,3 +39,12 @@ export function givenTodo(todo?: Partial<Todo>) {
     todo,
   );
 }
+
+export const aLocation = {
+  address: '1 New Orchard Road, Armonk, 10504',
+  geopoint: {lat: 41.1083018, lng: -73.7204677},
+  get geostring() {
+    // tslint:disable-next-line:no-invalid-this
+    return `${this.lat},${this.lng}`;
+  },
+};
