@@ -1,0 +1,14 @@
+<%_
+const _referencedModels = locals.referencedModels || [];
+const _properties = locals.properties || [];
+_referencedModels.forEach(m => {
+%>
+import {<%- m.className %>} from './<%- m.fileName.substring(0, m.fileName.length -3) %>';
+<%_
+});
+-%>
+/**
+ * The model type is generated from OpenAPI schema - <%- name %>
+ */
+export type <%- className %> = <%- signature %>;
+

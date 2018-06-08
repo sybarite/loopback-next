@@ -1,0 +1,27 @@
+import {operation, param} from '@loopback/rest';
+<%_
+const _referencedModels = locals.referencedModels || [];
+_referencedModels.forEach(m => {
+%>
+import {<%- m.className %>} from '../models/<%- m.fileName.substring(0, m.fileName.length -3) %>';
+<%_
+});
+-%>
+/**
+ * The controller class is generated from OpenAPI spec
+ */
+export class <%- className %> {
+  constructor() {}
+
+  <%_ for (const m of methods) { -%>
+  /**
+   * <%- m.description %>
+   */
+  <%- m.decoration %>
+  <%- m.signature %> {
+    throw new Error('Not implemented');
+  }
+
+  <%_ } -%>
+}
+
