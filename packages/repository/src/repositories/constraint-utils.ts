@@ -5,7 +5,7 @@
 
 import {Filter, WhereBuilder, Where, FilterBuilder} from '../query';
 import {AnyObject, DataObject} from '../common-types';
-import {cloneDeep, isArray} from 'lodash';
+import {cloneDeep} from 'lodash';
 import {Entity} from '../model';
 
 /**

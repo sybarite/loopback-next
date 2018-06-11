@@ -4,7 +4,6 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {EntityCrudRepository} from './repository';
-import {Class} from '../common-types';
 import {RelationType} from '../decorators/relation.decorator';
 import {Entity} from '../model';
 import {
@@ -14,9 +13,7 @@ import {
 
 export interface RelationDefinitionBase {
   type: RelationType;
-  modelFrom: Class<Entity> | string;
   keyTo: string;
-  keyFrom: string;
 }
 
 export interface HasManyDefinition extends RelationDefinitionBase {
@@ -38,7 +35,7 @@ export interface HasManyDefinition extends RelationDefinitionBase {
  * relation attached to a datasource.
  *
  */
-export function hasManyRepositoryFactory<SourceID, T extends Entity, ID>(
+export function relationRepositoryFactory<SourceID, T extends Entity, ID>(
   sourceModelId: SourceID,
   relationMetadata: HasManyDefinition,
   targetRepository: EntityCrudRepository<T, ID>,
@@ -47,9 +44,9 @@ export function hasManyRepositoryFactory<SourceID, T extends Entity, ID>(
     case RelationType.hasMany:
       const fkConstraint = {[relationMetadata.keyTo]: sourceModelId};
 
-      return new DefaultHasManyEntityCrudRepository(
-        targetRepository,
-        fkConstraint,
-      );
+      return new DefaultHasManyEntityCrudRepository<
+        T,
+        EntityCrudRepository<T, ID>
+      >(targetRepository, fkConstraint);
   }
 }
