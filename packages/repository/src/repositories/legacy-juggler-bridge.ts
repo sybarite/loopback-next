@@ -7,14 +7,7 @@ import * as legacy from 'loopback-datasource-juggler';
 
 import * as assert from 'assert';
 import {isPromiseLike} from '@loopback/context';
-import {
-  DataObject,
-  Options,
-  AnyObject,
-  Command,
-  NamedParameters,
-  PositionalParameters,
-} from '../common-types';
+import {DataObject, Options} from '../common-types';
 import {Entity, ModelDefinition} from '../model';
 import {Filter, Where} from '../query';
 import {EntityCrudRepository} from './repository';
@@ -215,16 +208,6 @@ export class DefaultCrudRepository<T extends Entity, ID>
 
   exists(id: ID, options?: Options): Promise<boolean> {
     return ensurePromise(this.modelClass.exists(id, options));
-  }
-
-  async execute(
-    command: Command,
-    // tslint:disable:no-any
-    parameters: NamedParameters | PositionalParameters,
-    options?: Options,
-  ): Promise<AnyObject> {
-    /* istanbul ignore next */
-    throw new Error('Not implemented');
   }
 
   protected toEntity(model: DataObject<T>): T {
