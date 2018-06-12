@@ -98,7 +98,8 @@ export interface CrudRepository<T extends ValueObject | Entity>
 /**
  * Base interface for a repository of entities
  */
-export interface EntityRepository<T extends Entity, ID> extends Repository<T> {}
+export interface EntityRepository<T extends Entity, ID>
+  extends ExecutableRepository<T> {}
 
 /**
  * CRUD operations for a repository of entities
