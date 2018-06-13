@@ -13,8 +13,18 @@ import {
   hasManyRepositoryFactory,
   HasManyDefinition,
   RelationType,
+  DefaultHasManyEntityCrudRepository,
+  hasMany,
+  RELATIONS_KEY,
+  ModelMetadataHelper,
+  repository,
 } from '../..';
 import {expect} from '@loopback/testlab';
+import {
+  MetadataInspector,
+  MetadataAccessor,
+  Reflector,
+} from '@loopback/context';
 
 describe('HasMany relation', () => {
   // Given a Customer and Order models - see definitions at the bottom
@@ -62,6 +72,23 @@ describe('HasMany relation', () => {
   // This should be enforced by the database to avoid race conditions
   it.skip('reject create request when the customer does not exist');
 
+  it.only('create related models', async () => {
+    async function createCustomerOrders(
+      customerId: number,
+      orderData: Partial<Order>,
+    ): Promise<Order> {
+      return await customerRepo.orders({id: customerId}).create(orderData);
+    }
+    //then
+    const order = await createCustomerOrders(1, {description: 'order 1'});
+    expect(order.toObject()).to.containDeep({
+      customerId: 1,
+      description: 'order 1',
+    });
+    const persisted = await orderRepo.findById(order.id);
+    expect(persisted.toObject()).to.deepEqual(order.toObject());
+  });
+
   //--- HELPERS ---//
 
   @model()
@@ -99,16 +126,44 @@ describe('HasMany relation', () => {
     customerId: number;
   }
 
-  let customerRepo: EntityCrudRepository<
+  let customerRepo: CustomerRepository;
+
+  async function getCustomerOrders(customerId: number): Promise<Order[]> {
+    return await customerRepo.orders({id: customerId}).find();
+  }
+
+  class OrderRepository extends DefaultCrudRepository<
+    Order,
+    typeof Order.prototype.id
+  > {
+    constructor() {
+      const db = new juggler.DataSource({connector: 'memory'});
+      super(Order, db);
+    }
+  }
+
+  class CustomerRepository extends DefaultCrudRepository<
     Customer,
     typeof Customer.prototype.id
-  >;
-  let orderRepo: EntityCrudRepository<Order, typeof Order.prototype.id>;
-  function givenCrudRepositoriesForCustomerAndOrder() {
-    const db = new juggler.DataSource({connector: 'memory'});
+  > {
+    public targetRepo: OrderRepository;
+    // @repository(OrderRepository) protected targetRepo: OrderRepository;
+    constructor() {
+      const db = new juggler.DataSource({connector: 'memory'});
+      super(Customer, db);
+      this.targetRepo = new OrderRepository();
+    }
+    // We should be able to inject a factory of OrderRepository by name or instance
+    // and infer `Order` from the `OrderRepository`
+    @hasMany(this.targetRepo) // The argument can be an object to pass in more info
+    public readonly orders: (key: Partial<Customer>) => OrderRepository;
+  }
 
-    customerRepo = new DefaultCrudRepository(Customer, db);
-    orderRepo = new DefaultCrudRepository(Order, db);
+  let orderRepo: EntityCrudRepository<Order, typeof Order.prototype.id>;
+
+  function givenCrudRepositoriesForCustomerAndOrder() {
+    customerRepo = new CustomerRepository();
+    orderRepo = new OrderRepository();
   }
 
   async function givenPersistedCustomerInstance() {
@@ -117,8 +172,6 @@ describe('HasMany relation', () => {
 
   function givenHasManyRelationMetadata(): HasManyDefinition {
     return {
-      modelFrom: Customer,
-      keyFrom: 'id',
       keyTo: 'customerId',
       type: RelationType.hasMany,
     };

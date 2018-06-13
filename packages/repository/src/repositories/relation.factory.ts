@@ -14,9 +14,9 @@ import {
 
 export interface RelationDefinitionBase {
   type: RelationType;
-  modelFrom: Class<Entity> | string;
+  // modelFrom: Class<Entity> | string;
   keyTo: string;
-  keyFrom: string;
+  // keyFrom: string;
 }
 
 export interface HasManyDefinition extends RelationDefinitionBase {

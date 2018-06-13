@@ -4,9 +4,17 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {Class} from '../common-types';
-import {Entity} from '../model';
+import {Entity, Model} from '../model';
 
-import {PropertyDecoratorFactory} from '@loopback/context';
+import {PropertyDecoratorFactory, Context} from '@loopback/context';
+import {DefaultCrudRepository} from '../repositories/legacy-juggler-bridge';
+import {repository} from './repository.decorator';
+import {Repository, EntityCrudRepository} from '../repositories/repository';
+import {
+  DefaultHasManyEntityCrudRepository,
+  hasManyRepositoryFactory,
+  HasManyDefinition,
+} from '..';
 
 // tslint:disable:no-any
 
@@ -61,12 +69,27 @@ export function hasOne(definition?: Object) {
 
 /**
  * Decorator for hasMany
- * @param definition
+ * @param targetRepo
  * @returns {(target:any, key:string)}
  */
-export function hasMany(definition?: Object) {
-  const rel = Object.assign({type: RelationType.hasMany}, definition);
-  return PropertyDecoratorFactory.createDecorator(RELATIONS_KEY, rel);
+export function hasMany<T extends Entity>(
+  targetRepo: EntityCrudRepository<T, typeof Entity.prototype.id>,
+) {
+  const rel: HasManyDefinition = Object.assign({type: RelationType.hasMany});
+
+  return function(target: any, key: string) {
+    function orders(id: Partial<typeof target>) {
+      Object.assign({}, {keyTo: 'customerId'}, rel);
+
+      return hasManyRepositoryFactory(id, rel, targetRepo);
+    }
+    Object.defineProperty(target, key, {
+      value: orders,
+      enumerable: true,
+      configurable: true,
+    });
+    PropertyDecoratorFactory.createDecorator(RELATIONS_KEY, rel)(target, key);
+  };
 }
 
 /**
