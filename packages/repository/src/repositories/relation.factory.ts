@@ -14,7 +14,7 @@ import {
 
 export interface RelationDefinitionBase {
   type: RelationType;
-  // modelFrom: Class<Entity> | string;
+  modelFrom: typeof Entity;
   keyTo: string;
   // keyFrom: string;
 }

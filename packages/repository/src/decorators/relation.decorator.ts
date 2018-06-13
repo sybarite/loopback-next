@@ -6,7 +6,13 @@
 import {Class} from '../common-types';
 import {Entity, Model} from '../model';
 
-import {PropertyDecoratorFactory, Context} from '@loopback/context';
+import {
+  PropertyDecoratorFactory,
+  Context,
+  inject,
+  Injection,
+  BindingKey,
+} from '@loopback/context';
 import {DefaultCrudRepository} from '../repositories/legacy-juggler-bridge';
 import {repository} from './repository.decorator';
 import {Repository, EntityCrudRepository} from '../repositories/repository';
@@ -14,6 +20,7 @@ import {
   DefaultHasManyEntityCrudRepository,
   hasManyRepositoryFactory,
   HasManyDefinition,
+  RelationDefinitionBase,
 } from '..';
 
 // tslint:disable:no-any
@@ -67,28 +74,16 @@ export function hasOne(definition?: Object) {
   return PropertyDecoratorFactory.createDecorator(RELATIONS_KEY, rel);
 }
 
-/**
- * Decorator for hasMany
- * @param targetRepo
- * @returns {(target:any, key:string)}
- */
-export function hasMany<T extends Entity>(
-  targetRepo: EntityCrudRepository<T, typeof Entity.prototype.id>,
-) {
-  const rel: HasManyDefinition = Object.assign({type: RelationType.hasMany});
-
-  return function(target: any, key: string) {
-    function orders(id: Partial<typeof target>) {
-      Object.assign({}, {keyTo: 'customerId'}, rel);
-
-      return hasManyRepositoryFactory(id, rel, targetRepo);
-    }
-    Object.defineProperty(target, key, {
-      value: orders,
-      enumerable: true,
-      configurable: true,
-    });
-    PropertyDecoratorFactory.createDecorator(RELATIONS_KEY, rel)(target, key);
+export function hasMany(definition?: Partial<HasManyDefinition>) {
+  return function(target: Object, key: string) {
+    const meta = Object.assign(
+      {
+        type: RelationType.hasMany,
+        keyTo: key,
+      },
+      definition,
+    );
+    PropertyDecoratorFactory.createDecorator(RELATIONS_KEY, meta)(target, key);
   };
 }
 

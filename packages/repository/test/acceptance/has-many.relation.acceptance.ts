@@ -18,6 +18,7 @@ import {
   RELATIONS_KEY,
   ModelMetadataHelper,
   repository,
+  RepositoryMixin,
 } from '../..';
 import {expect} from '@loopback/testlab';
 import {
@@ -25,6 +26,8 @@ import {
   MetadataAccessor,
   Reflector,
 } from '@loopback/context';
+import {Application} from '@loopback/core';
+import {hasManyRepository} from '../../src/decorators/relation.model.decorator';
 
 describe('HasMany relation', () => {
   // Given a Customer and Order models - see definitions at the bottom
@@ -37,7 +40,6 @@ describe('HasMany relation', () => {
 
   beforeEach(async () => {
     existingCustomerId = (await givenPersistedCustomerInstance()).id;
-    customerHasManyOrdersRelationMeta = givenHasManyRelationMetadata();
   });
 
   it('can create an instance of the related model', async () => {
@@ -73,14 +75,31 @@ describe('HasMany relation', () => {
   it.skip('reject create request when the customer does not exist');
 
   it.only('create related models', async () => {
-    async function createCustomerOrders(
-      customerId: number,
-      orderData: Partial<Order>,
-    ): Promise<Order> {
-      return await customerRepo.orders({id: customerId}).create(orderData);
+    class TestController {
+      constructor(
+        @repository(CustomerRepository) protected cusRepo: CustomerRepository,
+      ) {}
+
+      async createCustomerOrders(
+        customerId: number,
+        orderData: Partial<Order>,
+      ): Promise<Order> {
+        return await this.cusRepo.orders({id: customerId}).create(orderData);
+      }
     }
+    class TestApp extends RepositoryMixin(Application) {}
+    const app = new TestApp();
+    app.repository(CustomerRepository);
+    app.repository(OrderRepository);
+    app.controller(TestController);
+    const controller = await app.get<TestController>(
+      'controllers.TestController',
+    );
+
     //then
-    const order = await createCustomerOrders(1, {description: 'order 1'});
+    const order = await controller.createCustomerOrders(1, {
+      description: 'order 1',
+    });
     expect(order.toObject()).to.containDeep({
       customerId: 1,
       description: 'order 1',
@@ -90,20 +109,6 @@ describe('HasMany relation', () => {
   });
 
   //--- HELPERS ---//
-
-  @model()
-  class Customer extends Entity {
-    @property({
-      type: 'number',
-      id: true,
-    })
-    id: number;
-
-    @property({
-      type: 'string',
-    })
-    name: string;
-  }
 
   @model()
   class Order extends Entity {
@@ -118,19 +123,27 @@ describe('HasMany relation', () => {
       required: true,
     })
     description: string;
+  }
 
+  @model()
+  class Customer extends Entity {
     @property({
       type: 'number',
-      required: true,
+      id: true,
     })
-    customerId: number;
+    id: number;
+
+    @property({
+      type: 'string',
+    })
+    name: string;
+
+    @property.array(Order)
+    @hasMany()
+    orders: Order[];
   }
 
   let customerRepo: CustomerRepository;
-
-  async function getCustomerOrders(customerId: number): Promise<Order[]> {
-    return await customerRepo.orders({id: customerId}).find();
-  }
 
   class OrderRepository extends DefaultCrudRepository<
     Order,
@@ -146,16 +159,13 @@ describe('HasMany relation', () => {
     Customer,
     typeof Customer.prototype.id
   > {
-    public targetRepo: OrderRepository;
-    // @repository(OrderRepository) protected targetRepo: OrderRepository;
     constructor() {
       const db = new juggler.DataSource({connector: 'memory'});
       super(Customer, db);
-      this.targetRepo = new OrderRepository();
     }
     // We should be able to inject a factory of OrderRepository by name or instance
     // and infer `Order` from the `OrderRepository`
-    @hasMany(this.targetRepo) // The argument can be an object to pass in more info
+    @hasManyRepository(OrderRepository) // The argument can be an object to pass in more info
     public readonly orders: (key: Partial<Customer>) => OrderRepository;
   }
 
@@ -168,12 +178,5 @@ describe('HasMany relation', () => {
 
   async function givenPersistedCustomerInstance() {
     return customerRepo.create({name: 'a customer'});
-  }
-
-  function givenHasManyRelationMetadata(): HasManyDefinition {
-    return {
-      keyTo: 'customerId',
-      type: RelationType.hasMany,
-    };
   }
 });
