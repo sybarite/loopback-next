@@ -111,9 +111,8 @@ module.exports = class ArtifactGenerator extends BaseGenerator {
       // User Output
       this.log();
       this.log(
-        utils.toClassName(this.artifactInfo.type),
         chalk.yellow(this.artifactInfo.name),
-        'is now created in',
+        'was created in',
         `${this.artifactInfo.relPath}/`,
       );
       this.log();
